@@ -1,22 +1,22 @@
 :root {
   color-scheme: dark;
-  --bg: #0b0b10;
-  --bg-soft: #111219;
-  --ink: #f8fafc;
-  --muted: #aeb4c3;
-  --quiet: #7d8495;
-  --line: rgba(255, 255, 255, 0.1);
+  --bg: #07090d;
+  --bg-soft: #0c1017;
+  --ink: #f5f7fb;
+  --muted: #a6adbc;
+  --quiet: #778091;
+  --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.18);
-  --surface: #161821;
-  --surface-strong: #1f222d;
-  --surface-soft: rgba(255, 255, 255, 0.045);
-  --green: #5cc982;
-  --green-soft: rgba(92, 201, 130, 0.14);
+  --surface: #121721;
+  --surface-strong: #1a202b;
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --green: #67d58d;
+  --green-soft: rgba(103, 213, 141, 0.13);
   --yellow: #f6bd41;
-  --yellow-soft: rgba(246, 189, 65, 0.15);
-  --coral: #ff8a76;
-  --blue: #79a7ff;
-  --shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
+  --yellow-soft: rgba(246, 189, 65, 0.14);
+  --coral: #ff927f;
+  --blue: #86b0ff;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
   --radius: 8px;
 }
 
@@ -33,7 +33,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 220px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 220px),
     var(--bg);
   color: var(--ink);
   font-family:
@@ -91,7 +91,7 @@ button {
   width: 52px;
   height: 52px;
   border-radius: var(--radius);
-  box-shadow: 0 14px 32px rgba(246, 189, 65, 0.2);
+  box-shadow: 0 14px 32px rgba(246, 189, 65, 0.16);
 }
 
 .brand h1,
@@ -134,7 +134,7 @@ button {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface-strong);
+  background: linear-gradient(180deg, #202734, var(--surface-strong));
   color: var(--ink);
   padding: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -147,7 +147,7 @@ button {
 .icon-button:hover {
   transform: translateY(-1px);
   border-color: var(--line-strong);
-  background: rgba(39, 42, 55, 0.98);
+  background: linear-gradient(180deg, #283140, #202733);
 }
 
 .icon-button:focus-visible,
@@ -184,7 +184,9 @@ button {
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(28, 30, 40, 0.96), rgba(18, 20, 28, 0.96));
+  background:
+    linear-gradient(180deg, rgba(31, 38, 51, 0.96), rgba(14, 18, 26, 0.98)),
+    var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -204,7 +206,7 @@ button {
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #0d0f15;
+  background: #080b10;
   color: var(--ink);
   padding: 0 10px;
   font-size: 14px;
@@ -227,7 +229,7 @@ button {
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .segment {
@@ -283,7 +285,7 @@ button {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(20, 25, 35, 0.98), rgba(16, 21, 30, 0.98));
   box-shadow: var(--shadow);
 }
 
@@ -294,7 +296,7 @@ button {
   gap: 14px;
   padding: 18px;
   border-right: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.032);
 }
 
 .meal-type strong {
@@ -431,7 +433,7 @@ button {
 .allergen-list span {
   padding: 5px 8px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.3);
   color: #ffd391;
   font-weight: 900;
 }
@@ -464,7 +466,7 @@ button {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(21, 27, 37, 0.98), rgba(17, 22, 31, 0.98));
 }
 
 .week-stats span {
@@ -488,7 +490,7 @@ button {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: #101620;
   box-shadow: var(--shadow);
 }
 
@@ -558,7 +560,7 @@ button {
   padding: 28px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.04);
   text-align: center;
 }
 
@@ -577,8 +579,8 @@ button {
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #f8fafc;
-  color: #111219;
+  background: #161c27;
+  color: var(--ink);
   font-weight: 900;
   opacity: 0;
   pointer-events: none;
