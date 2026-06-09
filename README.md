@@ -1,6 +1,6 @@
 # 오늘급식
 
-정적 HTML/CSS/JS로 만든 우리학교 전용 NEIS 급식 화면입니다. 화면에서 학교 검색, API Key 입력, 데모 급식 데이터는 사용하지 않습니다.
+정적 HTML/CSS/JS로 만든 한세사이버보안고등학교 전용 NEIS 급식 화면입니다. 화면에서 학교 검색, API Key 입력, 데모 급식 데이터는 사용하지 않습니다.
 
 ## 실행
 
@@ -21,7 +21,35 @@ python3 -m http.server 4173
 - `schoolCode`: 표준학교코드
 - `apiKey`: 나이스 API Key가 필요할 때만 사용
 
-공개 저장소에는 실제 비밀 키를 커밋하지 마세요. 필요한 경우 서버 프록시나 배포 환경에서 `window.MEAL_CONFIG`를 먼저 주입해 사용합니다.
+현재 기본값은 아래와 같습니다.
+
+- `name`: 한세사이버보안고등학교
+- `officeCode`: B10
+- `schoolCode`: 7010911
+
+공개 저장소에는 실제 비밀 키를 커밋하지 마세요. 필요한 경우 서버 프록시나 배포 환경에서 `window.MEAL_CONFIG`를 먼저 주입해 사용합니다. `.env`, `.env.*`, `.env_*`, `server.txt`는 커밋 대상에서 제외합니다.
+
+## 배포
+
+소스 배포는 로컬에서 GitHub로 push한 뒤 서버에서 `git pull`로 반영합니다.
+
+```bash
+git add .
+git commit -m "Update meal app"
+git push
+```
+
+서버에서는 배포 디렉터리로 이동한 뒤 최신 커밋을 가져옵니다.
+
+```bash
+git pull
+```
+
+`.env` 파일이 필요한 경우 GitHub에 올리지 않고 별도로 서버에만 복사합니다.
+
+```bash
+scp .env <server-user>@<server-host>:<deploy-path>/.env
+```
 
 ## 주요 기능
 

@@ -3,9 +3,9 @@ const CACHE_KEY = "mealdesk.neis.weekCache";
 
 const runtimeConfig = window.MEAL_CONFIG || {};
 const SCHOOL_CONFIG = Object.freeze({
-  name: runtimeConfig.name || "우리학교",
-  officeCode: runtimeConfig.officeCode || "",
-  schoolCode: runtimeConfig.schoolCode || "",
+  name: runtimeConfig.name || "한세사이버보안고등학교",
+  officeCode: runtimeConfig.officeCode || "B10",
+  schoolCode: runtimeConfig.schoolCode || "7010911",
   apiKey: runtimeConfig.apiKey || "",
 });
 
