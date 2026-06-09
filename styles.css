@@ -1,17 +1,22 @@
 :root {
-  color-scheme: light;
-  --bg: #f6f7f1;
-  --ink: #20231f;
-  --muted: #6d746a;
-  --line: #dfe4d6;
-  --surface: #ffffff;
-  --surface-strong: #f1f6e9;
-  --green: #2f7d4f;
-  --green-strong: #1e6540;
-  --coral: #e85d4f;
+  color-scheme: dark;
+  --bg: #0b0b10;
+  --bg-soft: #111219;
+  --ink: #f8fafc;
+  --muted: #aeb4c3;
+  --quiet: #7d8495;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --surface: #161821;
+  --surface-strong: #1f222d;
+  --surface-soft: rgba(255, 255, 255, 0.045);
+  --green: #5cc982;
+  --green-soft: rgba(92, 201, 130, 0.14);
   --yellow: #f6bd41;
-  --blue: #4878d6;
-  --shadow: 0 22px 70px rgba(40, 56, 34, 0.12);
+  --yellow-soft: rgba(246, 189, 65, 0.15);
+  --coral: #ff8a76;
+  --blue: #79a7ff;
+  --shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
   --radius: 8px;
 }
 
@@ -19,17 +24,32 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--bg);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    linear-gradient(180deg, rgba(47, 125, 79, 0.08), transparent 340px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 220px),
     var(--bg);
   color: var(--ink);
   font-family:
-    Inter, Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui,
+    Pretendard, Inter, "Apple SD Gothic Neo", "Noto Sans KR", system-ui,
     sans-serif;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 96px 0 auto;
+  z-index: 0;
+  height: min(64vh, 580px);
+  background: url("./favicon.svg") center / min(58vw, 520px) no-repeat;
+  opacity: 0.045;
+  pointer-events: none;
 }
 
 button,
@@ -42,36 +62,36 @@ button {
 }
 
 .app-shell {
-  width: min(1080px, calc(100% - 32px));
+  position: relative;
+  z-index: 1;
+  width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 18px 0 54px;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 22px;
+  gap: 18px;
+  min-height: 72px;
+  margin-bottom: 24px;
+  padding: 10px 0;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
 .brand-mark {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 2px solid var(--ink);
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius);
-  background: var(--yellow);
-  color: var(--ink);
-  font-weight: 900;
+  box-shadow: 0 14px 32px rgba(246, 189, 65, 0.2);
 }
 
 .brand h1,
@@ -82,7 +102,7 @@ button {
 }
 
 .brand h1 {
-  font-size: clamp(24px, 4vw, 34px);
+  font-size: 32px;
   line-height: 1;
 }
 
@@ -91,6 +111,12 @@ button {
 .status-row {
   margin: 0;
   color: var(--muted);
+}
+
+.brand p {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  font-weight: 700;
 }
 
 .top-actions {
@@ -103,33 +129,39 @@ button {
 
 .icon-button {
   display: inline-grid;
-  width: 42px;
-  min-height: 42px;
+  width: 44px;
+  min-height: 44px;
   place-items: center;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-strong);
   color: var(--ink);
   padding: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition:
-    transform 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease;
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
 }
 
 .icon-button:hover {
   transform: translateY(-1px);
-  border-color: rgba(32, 35, 31, 0.35);
+  border-color: var(--line-strong);
+  background: rgba(39, 42, 55, 0.98);
+}
+
+.icon-button:focus-visible,
+.segment:focus-visible,
+.day-card:focus-visible,
+.date-input:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
 }
 
 .icon-button svg {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
   stroke-width: 2.2;
-}
-
-.subtle {
-  background: rgba(255, 255, 255, 0.72);
 }
 
 .hero-workspace {
@@ -138,72 +170,69 @@ button {
 }
 
 .meal-focus {
+  display: grid;
+  gap: 14px;
   min-width: 0;
-  padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: var(--shadow);
 }
 
 .date-bar {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  min-height: 148px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(28, 30, 40, 0.96), rgba(18, 20, 28, 0.96));
+  box-shadow: var(--shadow);
 }
 
 .date-bar > div {
   min-width: 0;
+  text-align: center;
 }
 
 .date-bar h2 {
-  font-size: clamp(32px, 7vw, 62px);
-  line-height: 0.98;
+  font-size: 56px;
+  line-height: 1.05;
 }
 
 .date-input {
-  width: 150px;
-  height: 34px;
-  margin-top: 10px;
+  width: 158px;
+  height: 38px;
+  margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fbfcf8;
-  color: var(--muted);
-  padding: 0 9px;
-  font-size: 13px;
-  font-weight: 900;
-  outline: 0;
-}
-
-.date-input:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(47, 125, 79, 0.13);
+  background: #0d0f15;
+  color: var(--ink);
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .eyebrow {
-  margin: 0 0 4px;
-  color: var(--green-strong);
-  font-size: 12px;
+  margin: 0 0 6px;
+  color: var(--yellow);
+  font-size: 14px;
   font-weight: 900;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
+  gap: 6px;
+  padding: 6px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface-strong);
+  background: rgba(255, 255, 255, 0.055);
 }
 
 .segment {
   min-width: 0;
-  min-height: 38px;
+  min-height: 42px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -212,9 +241,9 @@ button {
 }
 
 .segment.active {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: 0 6px 18px rgba(47, 125, 79, 0.13);
+  background: var(--yellow);
+  color: #18130a;
+  box-shadow: 0 12px 30px rgba(246, 189, 65, 0.2);
 }
 
 .status-row {
@@ -222,50 +251,55 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 14px 0 18px;
+  min-height: 40px;
+  padding: 0 2px;
   font-size: 14px;
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid rgba(92, 201, 130, 0.28);
   border-radius: 999px;
-  background: #e8f1df;
-  color: var(--green-strong);
+  background: var(--green-soft);
+  color: var(--green);
   font-weight: 900;
 }
 
 .meal-list {
   display: grid;
-  gap: 12px;
-  min-height: 320px;
+  gap: 14px;
+  min-height: 340px;
 }
 
 .meal-card {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 156px minmax(0, 1fr);
+  gap: 0;
   min-width: 0;
-  min-height: 148px;
-  padding: 16px;
+  min-height: 190px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .meal-type {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+  padding: 18px;
   border-right: 1px solid var(--line);
-  padding-right: 14px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .meal-type strong {
-  font-size: 22px;
+  font-size: 30px;
+  line-height: 1.15;
 }
 
 .meal-type span,
@@ -273,28 +307,45 @@ button {
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
+  line-height: 1.45;
+}
+
+.meal-card > div:last-child {
+  min-width: 0;
+  padding: 18px;
 }
 
 .menu-items {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .menu-items li {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
   min-width: 0;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: #f8faf4;
-  font-weight: 800;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.menu-items li:first-child {
+  padding-top: 0;
+}
+
+.menu-items li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .menu-items li span:first-child {
@@ -303,56 +354,60 @@ button {
 }
 
 .allergen-tag {
+  align-self: center;
+  max-width: 120px;
   color: var(--coral);
   font-size: 12px;
   font-weight: 900;
-  white-space: nowrap;
+  line-height: 1.35;
+  text-align: right;
 }
 
 .origin-line {
-  margin: 12px 0 0;
+  margin: 16px 0 0;
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.7;
 }
 
 .nutrition-chips {
-  display: flex;
-  gap: 7px;
-  flex-wrap: wrap;
-  margin: 12px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin: 16px 0 0;
 }
 
 .nutrition-chips div {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  min-height: 28px;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: #eef5e8;
+  display: grid;
+  gap: 3px;
+  min-height: 54px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
 }
 
 .nutrition-chips dt {
-  color: var(--green-strong);
+  color: var(--quiet);
   font-size: 12px;
   font-weight: 900;
 }
 
 .nutrition-chips dd {
   margin: 0;
-  font-size: 12px;
+  color: var(--ink);
+  font-size: 15px;
   font-weight: 900;
 }
 
 .allergen-legend {
   display: grid;
-  grid-template-columns: 170px minmax(0, 1fr);
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--line);
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(246, 189, 65, 0.25);
   border-radius: var(--radius);
-  background: #fffaf0;
+  background: var(--yellow-soft);
 }
 
 .allergen-legend strong {
@@ -363,6 +418,7 @@ button {
 .allergen-legend span {
   color: var(--muted);
   font-size: 13px;
+  line-height: 1.45;
 }
 
 .allergen-list {
@@ -375,13 +431,13 @@ button {
 .allergen-list span {
   padding: 5px 8px;
   border-radius: 999px;
-  background: #fff;
-  color: var(--coral);
+  background: rgba(0, 0, 0, 0.22);
+  color: #ffd391;
   font-weight: 900;
 }
 
 .week-section {
-  margin-top: 20px;
+  margin-top: 28px;
 }
 
 .section-head {
@@ -389,22 +445,22 @@ button {
   align-items: end;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .section-head h2 {
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .week-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .week-stats div {
-  min-height: 78px;
+  min-height: 82px;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -414,46 +470,59 @@ button {
 .week-stats span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 900;
 }
 
 .week-stats strong {
   display: block;
   margin-top: 8px;
-  font-size: 24px;
+  font-size: 25px;
+  line-height: 1.1;
 }
 
 .week-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .day-card {
   display: grid;
-  gap: 10px;
+  grid-template-rows: auto auto auto 1fr;
+  gap: 9px;
   min-width: 0;
-  min-height: 190px;
+  min-height: 210px;
   padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   text-align: left;
 }
 
+.day-card:last-child {
+  border-right: 0;
+}
+
 .day-card:hover {
-  border-color: rgba(32, 35, 31, 0.34);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .day-card.active {
-  border-color: var(--green);
-  box-shadow: inset 0 0 0 2px rgba(47, 125, 79, 0.16);
+  background: rgba(246, 189, 65, 0.12);
+  box-shadow: inset 0 3px 0 var(--yellow);
 }
 
 .day-card strong {
-  font-size: 18px;
+  font-size: 19px;
+  line-height: 1.2;
 }
 
 .day-card small,
@@ -463,34 +532,40 @@ button {
 }
 
 .day-card p {
-  line-height: 1.5;
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
 }
 
 .day-card .chip {
   justify-self: start;
+  max-width: 100%;
   padding: 5px 8px;
   border-radius: 999px;
-  background: #edf5ff;
+  background: rgba(121, 167, 255, 0.14);
   color: var(--blue);
   font-size: 12px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .empty-state {
   display: grid;
   place-items: center;
-  min-height: 280px;
+  min-height: 300px;
   padding: 28px;
-  border: 1px dashed #c9d3bf;
+  border: 1px dashed var(--line-strong);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.045);
   text-align: center;
 }
 
 .empty-state strong {
   display: block;
   margin-bottom: 6px;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .toast {
@@ -500,10 +575,11 @@ button {
   z-index: 40;
   max-width: min(420px, calc(100% - 32px));
   padding: 12px 14px;
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--ink);
-  color: #fff;
-  font-weight: 800;
+  background: #f8fafc;
+  color: #111219;
+  font-weight: 900;
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 10px);
@@ -521,12 +597,22 @@ button {
   .week-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .day-card {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
 }
 
 @media (max-width: 640px) {
+  body::after {
+    inset: 72px 0 auto;
+    background-size: min(88vw, 360px);
+  }
+
   .app-shell {
     width: 100%;
-    padding: 14px 11px 48px;
+    padding: 12px 11px 44px;
   }
 
   .topbar,
@@ -535,44 +621,52 @@ button {
     flex-direction: column;
   }
 
+  .brand h1 {
+    font-size: 28px;
+  }
+
+  .brand-mark {
+    width: 46px;
+    height: 46px;
+  }
+
   .top-actions {
     display: grid;
-    grid-template-columns: repeat(3, 42px);
+    grid-template-columns: repeat(3, 44px);
   }
 
   .date-bar {
-    grid-template-columns: 42px 42px minmax(0, 1fr);
-    grid-template-areas: "prev next label";
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "label label"
+      "prev next";
+    min-height: 164px;
+    padding: 16px;
   }
 
   .date-bar > button:first-child {
     grid-area: prev;
+    justify-self: end;
   }
 
   .date-bar > div {
     grid-area: label;
+    overflow: hidden;
+    text-align: center;
   }
 
   .date-bar > button:last-child {
     grid-area: next;
+    justify-self: start;
   }
 
-  .meal-focus {
-    padding: 16px;
+  .date-bar h2 {
+    font-size: 36px;
+    white-space: nowrap;
   }
 
-  .meal-card {
-    grid-template-columns: 1fr;
-  }
-
-  .meal-type {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: start;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding-right: 0;
-    padding-bottom: 12px;
+  .date-input {
+    width: 136px;
   }
 
   .status-row {
@@ -589,16 +683,49 @@ button {
     font-size: 14px;
   }
 
+  .meal-card {
+    grid-template-columns: 1fr;
+  }
+
+  .meal-type {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .meal-type strong {
+    font-size: 26px;
+  }
+
+  .menu-items li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    font-size: 18px;
+  }
+
+  .nutrition-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .allergen-tag {
-    white-space: normal;
+    max-width: none;
     text-align: left;
   }
 
-  .menu-items,
-  .menu-items li,
   .allergen-legend,
   .week-stats,
   .week-grid {
     grid-template-columns: 1fr;
+  }
+
+  .day-card {
+    min-height: 150px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .day-card:last-child {
+    border-bottom: 0;
   }
 }
