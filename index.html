@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2f7d4f" />
+    <title>오늘급식</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">밥</span>
+          <div>
+            <h1>오늘급식</h1>
+            <p id="schoolLabel">우리학교</p>
+          </div>
+        </div>
+
+        <nav class="top-actions" aria-label="빠른 도구">
+          <button class="icon-button" id="todayButton" type="button" aria-label="오늘로 이동" title="오늘">
+            <i data-lucide="calendar-days" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button" id="refreshButton" type="button" aria-label="새로고침" title="새로고침">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+          </button>
+          <button class="icon-button" id="copyMenuButton" type="button" aria-label="오늘 메뉴 복사" title="오늘 메뉴 복사">
+            <i data-lucide="copy" aria-hidden="true"></i>
+          </button>
+        </nav>
+      </header>
+
+      <section class="hero-workspace" aria-label="급식 대시보드">
+        <div class="meal-focus">
+          <div class="date-bar">
+            <button class="icon-button subtle" id="prevDayButton" type="button" aria-label="이전 날짜">
+              <i data-lucide="chevron-left" aria-hidden="true"></i>
+            </button>
+            <div>
+              <p class="eyebrow" id="dayName">화요일</p>
+              <h2 id="selectedDateLabel">6월 9일</h2>
+              <input class="date-input" id="dateInput" type="date" aria-label="날짜 직접 선택" />
+            </div>
+            <button class="icon-button subtle" id="nextDayButton" type="button" aria-label="다음 날짜">
+              <i data-lucide="chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="segmented-control" role="tablist" aria-label="식사 구분">
+            <button class="segment active" type="button" data-meal-filter="all">전체</button>
+            <button class="segment" type="button" data-meal-filter="조식">조식</button>
+            <button class="segment" type="button" data-meal-filter="중식">중식</button>
+            <button class="segment" type="button" data-meal-filter="석식">석식</button>
+          </div>
+
+          <div class="status-row">
+            <span class="status-pill" id="sourceStatus">나이스 확인 중</span>
+            <span id="lastUpdated">KST 기준</span>
+          </div>
+
+          <div class="meal-list" id="mealList" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="week-section" aria-labelledby="weekHeading">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Weekly</p>
+            <h2 id="weekHeading">이번 주 급식</h2>
+          </div>
+          <p id="weekRange">-</p>
+        </div>
+        <div class="week-stats" id="weekStats"></div>
+        <div class="week-grid" id="weekGrid"></div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

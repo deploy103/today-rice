@@ -1,0 +1,16 @@
+{
+  "name": "오늘급식",
+  "short_name": "오늘급식",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f7f1",
+  "theme_color": "#2f7d4f",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
