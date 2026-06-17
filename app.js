@@ -31,6 +31,8 @@ const ALLERGEN_LABELS = {
   19: "잣",
 };
 
+const PORK_ALLERGEN_CODE = 10;
+
 const SOURCE_LABELS = {
   loading: "불러오는 중",
   missing: "학교 코드 필요",
@@ -42,7 +44,6 @@ const SOURCE_LABELS = {
 
 const state = {
   selectedDate: getInitialDate(),
-  selectedMeal: "all",
   mealsByDate: new Map(),
   source: "loading",
   lastUpdated: null,
@@ -53,6 +54,7 @@ const elements = {};
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheElements();
+  removeLegacyMealFilters();
   bindEvents();
   loadWeek();
   createIcons();
@@ -100,14 +102,11 @@ function bindEvents() {
   });
   elements.refreshButton.addEventListener("click", () => loadWeek({ force: true }));
   elements.copyMenuButton.addEventListener("click", copyTodayMenu);
+}
 
-  document.querySelectorAll("[data-meal-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedMeal = button.dataset.mealFilter;
-      document.querySelectorAll("[data-meal-filter]").forEach((item) => item.classList.toggle("active", item === button));
-      render();
-    });
-  });
+function removeLegacyMealFilters() {
+  document.querySelector(".segmented-control")?.remove();
+  document.querySelectorAll("[data-meal-filter]").forEach((button) => button.remove());
 }
 
 async function loadWeek(options = {}) {
@@ -287,7 +286,7 @@ function renderMealList() {
     return;
   }
 
-  const meals = getFilteredMeals(state.selectedDate);
+  const meals = state.mealsByDate.get(state.selectedDate) || [];
   if (!meals.length) {
     elements.mealList.innerHTML = `<div class="empty-state"><strong>급식 정보 없음</strong><span>방학, 주말, 미운영일이거나 아직 데이터가 등록되지 않았습니다.</span></div>`;
     return;
@@ -298,22 +297,32 @@ function renderMealList() {
 
 function renderMealCard(meal) {
   const allergenSet = new Set(meal.dishes.flatMap((dish) => dish.allergens));
+  const hasPork = meal.dishes.some((dish) => dish.allergens.includes(PORK_ALLERGEN_CODE));
   const menuItems = meal.dishes
-    .map(
-      (dish) => `
-        <li>
+    .map((dish) => {
+      const hasPorkDish = dish.allergens.includes(PORK_ALLERGEN_CODE);
+      const tags = [
+        hasPorkDish ? `<span class="pork-tag">돼지고기</span>` : "",
+        dish.allergens.length ? `<span class="allergen-tag">${dish.allergens.join(".")}</span>` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+
+      return `
+        <li class="${hasPorkDish ? "pork-menu-item" : ""}">
           <span>${escapeHtml(dish.name)}</span>
-          ${dish.allergens.length ? `<span class="allergen-tag">${dish.allergens.join(".")}</span>` : ""}
+          ${tags ? `<span class="menu-tags">${tags}</span>` : ""}
         </li>
-      `,
-    )
+      `;
+    })
     .join("");
 
   return `
-    <article class="meal-card">
+    <article class="meal-card ${hasPork ? "pork-alert" : ""}">
       <div class="meal-type">
         <strong>${escapeHtml(meal.type)}</strong>
         <span>${escapeHtml(meal.calories || "-")}</span>
+        ${hasPork ? `<span class="pork-alert-line">돼지고기 포함</span>` : ""}
         <span>${allergenSet.size ? `${allergenSet.size}개 알레르기 표기` : "알레르기 표기 없음"}</span>
       </div>
       <div>
@@ -369,6 +378,7 @@ function renderAllergenLegend(meals) {
 function renderWeek() {
   const [startDate, endDate] = getWeekBounds(state.selectedDate);
   const weekDates = enumerateDates(startDate, endDate);
+  const today = todayKst();
   elements.weekRange.textContent = `${formatMonthDay(parseIsoDate(startDate))} - ${formatMonthDay(parseIsoDate(endDate))}`;
   renderWeekStats(weekDates);
   elements.weekGrid.innerHTML = weekDates
@@ -378,10 +388,16 @@ function renderWeek() {
       const weekday = formatShortWeekday(parseIsoDate(date));
       const summary = lunch?.dishes?.slice(0, 4).map((dish) => dish.name).join(" · ") || "급식 정보 없음";
       const chip = lunch?.calories || "미등록";
+      const cardClasses = ["day-card", date === state.selectedDate ? "active" : "", date === today ? "today" : ""]
+        .filter(Boolean)
+        .join(" ");
 
       return `
-        <button class="day-card ${date === state.selectedDate ? "active" : ""}" type="button" data-date="${date}">
-          <small>${weekday}</small>
+        <button class="${cardClasses}" type="button" data-date="${date}">
+          <small class="day-card-meta">
+            <span>${weekday}</span>
+            ${date === today ? `<span class="today-badge">오늘</span>` : ""}
+          </small>
           <strong>${formatMonthDay(parseIsoDate(date))}</strong>
           <span class="chip">${escapeHtml(chip)}</span>
           <p>${escapeHtml(summary)}</p>
@@ -423,14 +439,6 @@ function renderWeekStats(weekDates) {
   `;
 }
 
-function getFilteredMeals(date) {
-  const meals = state.mealsByDate.get(date) || [];
-  if (state.selectedMeal === "all") {
-    return meals;
-  }
-  return meals.filter((meal) => meal.type.includes(state.selectedMeal));
-}
-
 function moveDate(delta) {
   state.selectedDate = addDays(state.selectedDate, delta);
   updateDateQuery();
@@ -444,7 +452,7 @@ function moveDate(delta) {
 }
 
 async function copyTodayMenu() {
-  const meals = getFilteredMeals(state.selectedDate);
+  const meals = state.mealsByDate.get(state.selectedDate) || [];
   if (!meals.length) {
     showToast("복사할 급식 정보가 없습니다.");
     return;
@@ -463,10 +471,10 @@ async function copyTodayMenu() {
 
   try {
     await navigator.clipboard.writeText(lines.join("\n"));
-    showToast("오늘 메뉴를 복사했습니다.");
+    showToast("점심 메뉴를 복사했습니다.");
   } catch {
     copyWithTextarea(lines.join("\n"));
-    showToast("오늘 메뉴를 복사했습니다.");
+    showToast("점심 메뉴를 복사했습니다.");
   }
 }
 

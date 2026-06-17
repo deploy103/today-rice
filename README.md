@@ -28,8 +28,9 @@ scp .env <server-user>@<server-host>:<deploy-path>/.env
 
 - 날짜 이동, 오늘 이동, 주간 급식 카드
 - 날짜 직접 선택 및 `?date=YYYY-MM-DD` 링크 유지
-- 오늘 메뉴 클립보드 복사
+- 선택 날짜 점심 메뉴 클립보드 복사
 - 열량, 영양정보, 원산지, 알레르기 코드 표시
+- 돼지고기 포함 메뉴 자동 강조
 - 주간 급식일, 평균 열량, 등록 식사 수 요약
 - API 성공 데이터 주 단위 캐시
 - 모바일 대응, favicon, PWA manifest

@@ -7,9 +7,9 @@
     <title>오늘급식</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260617-2" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-    <script src="./app.js" defer></script>
+    <script src="./app.js?v=20260617-2" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -29,7 +29,7 @@
           <button class="icon-button" id="refreshButton" type="button" aria-label="새로고침" title="새로고침">
             <i data-lucide="refresh-cw" aria-hidden="true"></i>
           </button>
-          <button class="icon-button" id="copyMenuButton" type="button" aria-label="오늘 메뉴 복사" title="오늘 메뉴 복사">
+          <button class="icon-button" id="copyMenuButton" type="button" aria-label="점심 메뉴 복사" title="점심 메뉴 복사">
             <i data-lucide="copy" aria-hidden="true"></i>
           </button>
         </nav>
@@ -51,19 +51,15 @@
             </button>
           </div>
 
-          <div class="segmented-control" role="tablist" aria-label="식사 구분">
-            <button class="segment active" type="button" data-meal-filter="all">전체</button>
-            <button class="segment" type="button" data-meal-filter="조식">조식</button>
-            <button class="segment" type="button" data-meal-filter="중식">중식</button>
-            <button class="segment" type="button" data-meal-filter="석식">석식</button>
-          </div>
-
           <div class="status-row">
             <span class="status-pill" id="sourceStatus">나이스 확인 중</span>
             <span id="lastUpdated">KST 기준</span>
           </div>
 
           <div class="meal-list" id="mealList" aria-live="polite"></div>
+          <p class="diet-notice">
+            돼지고기 표시는 참고용입니다. 표기 누락, 육수, 조리 과정 등은 확인할 수 없어 실제 포함 여부와 다를 수 있으니 식이 제한이 있으면 급식실에 확인하세요.
+          </p>
         </div>
       </section>
 
