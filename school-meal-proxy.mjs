@@ -2,6 +2,7 @@ import http from "node:http";
 import { URL } from "node:url";
 import { annotateDishName } from "./allergen-infer.mjs";
 import { kstWeekBounds, msUntilNextKstMidnight } from "./kst.mjs";
+import { mealSource, mergeNeisAndSchool, siriDaysToRows } from "./meal-merge.mjs";
 
 const LISTEN_HOST = "0.0.0.0";
 const LISTEN_PORT = 8010;
@@ -9,6 +10,7 @@ const CALENDAR_URL = "https://hansei.sen.hs.kr/197900/subMenu.do";
 const DETAIL_URL = "https://hansei.sen.hs.kr/dggb/module/mlsv/selectMlsvDetailPopup.do";
 const SITE_ID = "SEI_00000617";
 const USER_AGENT = "today-rice-school-meal-proxy/1.0";
+const SIRI_MEAL_URL = process.env.SIRI_MEAL_URL || "http://siri-school-timetable:3000";
 const FETCH_TIMEOUT_MS = 12_000;
 const MAX_RANGE_DAYS = 14;
 const CACHE_TTL_MS = 6 * 60 * 60_000;
@@ -202,10 +204,45 @@ async function loadSchoolMeals(from, to) {
   return rows;
 }
 
+async function loadNeisMeals(from, to) {
+  const url = `${SIRI_MEAL_URL}/api/meal/range?officeCode=B10&schoolCode=7010911&from=${from}&to=${to}`;
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`neis ${response.status}`);
+  }
+  const data = await response.json();
+  return siriDaysToRows(data.days);
+}
+
+async function loadMergedMeals(from, to) {
+  let neisRows = [];
+  let schoolRows = [];
+  const errors = [];
+  try {
+    neisRows = await loadNeisMeals(from, to);
+  } catch (error) {
+    errors.push(error);
+  }
+  try {
+    schoolRows = await loadSchoolMeals(from, to);
+  } catch (error) {
+    errors.push(error);
+  }
+  const rows = mergeNeisAndSchool(neisRows, schoolRows);
+  if (rows.length === 0 && errors.length) {
+    throw errors[0];
+  }
+  return rows;
+}
+
 async function getSchoolMeals(from, to) {
   const cached = readCachedRows(from, to);
   if (cached) return cached;
-  const rows = await loadSchoolMeals(from, to);
+  const rows = await loadMergedMeals(from, to);
   writeCachedRows(from, to, rows);
   return rows;
 }
@@ -213,9 +250,9 @@ async function getSchoolMeals(from, to) {
 async function warmupCurrentWeek(reason) {
   const [from, to] = kstWeekBounds();
   try {
-    const rows = await loadSchoolMeals(from, to);
+    const rows = await loadMergedMeals(from, to);
     writeCachedRows(from, to, rows);
-    console.log(`warmed ${from}..${to} rows=${rows.length} reason=${reason}`);
+    console.log(`warmed ${from}..${to} rows=${rows.length} source=${mealSource(rows)} reason=${reason}`);
   } catch (error) {
     console.error(`warmup failed reason=${reason}`, error);
   }

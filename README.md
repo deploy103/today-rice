@@ -41,4 +41,4 @@ scp .env <server-user>@<server-host>:<deploy-path>/.env
 ## 연동 엔드포인트
 
 - 급식: `https://open.neis.go.kr/hub/mealServiceDietInfo`
-- 학교 식단 보조: `/api/school-meals` (한세 홈페이지)
+- 급식 조회: `/api/school-meals` (NEIS 키는 서버에서 쓰고, 없는 날만 한세 홈페이지)

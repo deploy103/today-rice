@@ -1,5 +1,4 @@
-const NEIS_BASE_URL = "https://open.neis.go.kr/hub";
-const CACHE_KEY = "mealdesk.neis.weekCache.v2";
+const CACHE_KEY = "mealdesk.neis.weekCache.v3";
 const CACHE_TTL_MS = 6 * 60 * 60_000;
 
 const runtimeConfig = window.MEAL_CONFIG || {};
@@ -7,7 +6,6 @@ const SCHOOL_CONFIG = Object.freeze({
   name: runtimeConfig.name || "한세사이버보안고등학교",
   officeCode: runtimeConfig.officeCode || "B10",
   schoolCode: runtimeConfig.schoolCode || "7010911",
-  apiKey: runtimeConfig.apiKey || "",
 });
 
 const ALLERGEN_LABELS = {
@@ -176,79 +174,17 @@ async function loadWeek(options = {}) {
   }
 }
 
-async function fetchNeisMealRows(startDate, endDate) {
-  const params = new URLSearchParams({
-    Type: "json",
-    pIndex: "1",
-    pSize: "100",
-    ATPT_OFCDC_SC_CODE: SCHOOL_CONFIG.officeCode,
-    SD_SCHUL_CODE: SCHOOL_CONFIG.schoolCode,
-    MLSV_FROM_YMD: compactDate(startDate),
-    MLSV_TO_YMD: compactDate(endDate),
-  });
-
-  if (SCHOOL_CONFIG.apiKey) {
-    params.set("KEY", SCHOOL_CONFIG.apiKey);
-  }
-
-  const response = await fetch(`${NEIS_BASE_URL}/mealServiceDietInfo?${params}`);
-  if (!response.ok) {
-    throw new Error(`NEIS HTTP ${response.status}`);
-  }
-
-  const data = await response.json();
-  if (data.RESULT) {
-    if (data.RESULT.CODE === "INFO-200") {
-      return [];
-    }
-
-    throw new Error(data.RESULT.MESSAGE || data.RESULT.CODE || "NEIS error");
-  }
-
-  return data.mealServiceDietInfo?.[1]?.row || [];
-}
-
-function mealRowKey(row) {
-  return `${row.MLSV_YMD}:${row.MMEAL_SC_NM || ""}`;
-}
-
-function mergeMealRows(primary, fallback) {
-  const merged = new Map();
-  fallback.forEach((row) => merged.set(mealRowKey(row), row));
-  primary.forEach((row) => merged.set(mealRowKey(row), row));
-  return [...merged.values()];
-}
-
-async function fetchSchoolMealRows(startDate, endDate) {
+async function fetchMealRows(startDate, endDate) {
   const response = await fetch(`/api/school-meals?from=${startDate}&to=${endDate}`, { cache: "no-store" });
   if (!response.ok) {
-    throw new Error(`school meals HTTP ${response.status}`);
+    throw new Error(`meals HTTP ${response.status}`);
   }
   const data = await response.json();
-  return Array.isArray(data.rows) ? data.rows : [];
-}
-
-async function fetchMealRows(startDate, endDate) {
-  let neisRows = [];
-  let neisError = null;
-  try {
-    neisRows = await fetchNeisMealRows(startDate, endDate);
-  } catch (error) {
-    neisError = error;
-  }
-
-  let schoolRows = [];
-  try {
-    schoolRows = await fetchSchoolMealRows(startDate, endDate);
-  } catch (error) {
-    if (neisError) throw neisError;
-    if (neisRows.length === 0) throw error;
-  }
-
-  const rows = mergeMealRows(neisRows, schoolRows);
+  const rows = Array.isArray(data.rows) ? data.rows : [];
+  const hasCodes = rows.some((row) => /\(\d/.test(row.DDISH_NM || ""));
   return {
     rows,
-    source: schoolRows.length && schoolRows.length >= neisRows.length ? "school" : "api",
+    source: hasCodes ? "api" : rows.length ? "school" : "empty",
   };
 }
 
