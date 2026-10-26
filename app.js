@@ -1,5 +1,6 @@
 const NEIS_BASE_URL = "https://open.neis.go.kr/hub";
-const CACHE_KEY = "mealdesk.neis.weekCache";
+const CACHE_KEY = "mealdesk.neis.weekCache.v2";
+const CACHE_TTL_MS = 6 * 60 * 60_000;
 
 const runtimeConfig = window.MEAL_CONFIG || {};
 const SCHOOL_CONFIG = Object.freeze({
@@ -37,6 +38,7 @@ const SOURCE_LABELS = {
   loading: "불러오는 중",
   missing: "학교 코드 필요",
   api: "나이스 연결",
+  school: "학교 식단",
   empty: "등록된 급식 없음",
   cache: "저장 데이터",
   error: "불러오기 실패",
@@ -127,32 +129,39 @@ async function loadWeek(options = {}) {
     return;
   }
 
+  const cached = loadCachedRows(startDate, endDate);
+  const force = Boolean(options.force);
+  const liveWeek = weekDates.includes(todayKst());
+
   try {
-    if (!options.force) {
-      const cached = loadCachedRows(startDate, endDate);
-      if (cached) {
-        hydrateWeekRows(cached.rows, weekDates);
-        state.source = "cache";
-        state.lastUpdated = new Date(cached.cachedAt);
-        state.isLoading = false;
-        render();
+    if (cached && !force) {
+      hydrateWeekRows(cached.rows, weekDates);
+      state.source = "cache";
+      state.lastUpdated = new Date(cached.cachedAt);
+      state.isLoading = false;
+      render();
+      if (!liveWeek) {
         return;
       }
     }
 
-    const rows = await fetchMealRows(startDate, endDate);
+    const { rows, source } = await fetchMealRows(startDate, endDate);
     hydrateWeekRows(rows, weekDates);
-    saveCachedRows(startDate, endDate, rows);
-    state.source = rows.length ? "api" : "empty";
+    if (rows.length) {
+      saveCachedRows(startDate, endDate, rows);
+    } else {
+      clearCachedRows(startDate, endDate);
+    }
+    state.source = rows.length ? source : "empty";
     state.lastUpdated = new Date();
   } catch (error) {
     console.error(error);
-    const cached = loadCachedRows(startDate, endDate);
+    const fallback = cached || loadCachedRows(startDate, endDate);
 
-    if (cached) {
-      hydrateWeekRows(cached.rows, weekDates);
+    if (fallback) {
+      hydrateWeekRows(fallback.rows, weekDates);
       state.source = "cache";
-      state.lastUpdated = new Date(cached.cachedAt);
+      state.lastUpdated = new Date(fallback.cachedAt);
       showToast("나이스 호출에 실패해 저장된 데이터를 표시합니다.");
     } else {
       setEmptyWeek(weekDates);
@@ -167,7 +176,7 @@ async function loadWeek(options = {}) {
   }
 }
 
-async function fetchMealRows(startDate, endDate) {
+async function fetchNeisMealRows(startDate, endDate) {
   const params = new URLSearchParams({
     Type: "json",
     pIndex: "1",
@@ -199,6 +208,50 @@ async function fetchMealRows(startDate, endDate) {
   return data.mealServiceDietInfo?.[1]?.row || [];
 }
 
+function mealRowKey(row) {
+  return `${row.MLSV_YMD}:${row.MMEAL_SC_NM || ""}`;
+}
+
+function mergeMealRows(primary, fallback) {
+  const merged = new Map();
+  fallback.forEach((row) => merged.set(mealRowKey(row), row));
+  primary.forEach((row) => merged.set(mealRowKey(row), row));
+  return [...merged.values()];
+}
+
+async function fetchSchoolMealRows(startDate, endDate) {
+  const response = await fetch(`/api/school-meals?from=${startDate}&to=${endDate}`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`school meals HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return Array.isArray(data.rows) ? data.rows : [];
+}
+
+async function fetchMealRows(startDate, endDate) {
+  let neisRows = [];
+  let neisError = null;
+  try {
+    neisRows = await fetchNeisMealRows(startDate, endDate);
+  } catch (error) {
+    neisError = error;
+  }
+
+  let schoolRows = [];
+  try {
+    schoolRows = await fetchSchoolMealRows(startDate, endDate);
+  } catch (error) {
+    if (neisError) throw neisError;
+    if (neisRows.length === 0) throw error;
+  }
+
+  const rows = mergeMealRows(neisRows, schoolRows);
+  return {
+    rows,
+    source: schoolRows.length && schoolRows.length >= neisRows.length ? "school" : "api",
+  };
+}
+
 function hydrateWeekRows(rows, weekDates) {
   setEmptyWeek(weekDates);
   normalizeMealRows(rows).forEach((meal) => {
@@ -225,6 +278,10 @@ function normalizeMealRows(rows) {
 }
 
 function saveCachedRows(startDate, endDate, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    clearCachedRows(startDate, endDate);
+    return;
+  }
   const cache = loadCacheStore();
   cache[getCacheId(startDate, endDate)] = {
     cachedAt: new Date().toISOString(),
@@ -233,8 +290,18 @@ function saveCachedRows(startDate, endDate, rows) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
 }
 
+function clearCachedRows(startDate, endDate) {
+  const cache = loadCacheStore();
+  delete cache[getCacheId(startDate, endDate)];
+  localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+}
+
 function loadCachedRows(startDate, endDate) {
-  return loadCacheStore()[getCacheId(startDate, endDate)] || null;
+  const cached = loadCacheStore()[getCacheId(startDate, endDate)];
+  if (!cached?.rows?.length || !cached.cachedAt) return null;
+  const age = Date.now() - Date.parse(cached.cachedAt);
+  if (!Number.isFinite(age) || age > CACHE_TTL_MS) return null;
+  return cached;
 }
 
 function loadCacheStore() {
@@ -498,8 +565,26 @@ function splitMealText(value) {
     .filter(Boolean);
 }
 
+function inferAllergenCodes(name) {
+  const rules = [
+    [1, /계란|달걀|오므라이스|에그|메추리알/],
+    [2, /우유|요거트|치즈|버터|크림|라떼/],
+    [5, /된장|두부|콩나물|콩고기/],
+    [6, /국수|우동|칼국수|만두|빵|쿠키|카츠|까스|튀김|크로칸|파스타|수제비|떡볶이/],
+    [8, /게살|꽃게|게장/],
+    [9, /새우/],
+    [10, /돼지|돈육|돈까스|돈가스|제육|삼겹|목살|베이컨|소시지|소세지|탕수육|돈갈비|동파육|햄(?!버거)/],
+    [12, /토마토|케첩/],
+    [15, /닭|치킨|깐풍기/],
+    [16, /소고기|한우|소갈비|육우/],
+    [17, /오징어|주꾸미/],
+    [18, /골뱅이|바지락|조개|홍합|전복/],
+  ];
+  return rules.filter(([, pattern]) => pattern.test(name)).map(([code]) => code);
+}
+
 function parseDish(rawDish) {
-  const allergens = [...rawDish.matchAll(/\(([\d.]+)\)/g)]
+  const explicit = [...rawDish.matchAll(/\(([\d.]+)\)/g)]
     .flatMap((match) => match[1].split("."))
     .filter(Boolean)
     .map(Number)
@@ -509,6 +594,7 @@ function parseDish(rawDish) {
     .replace(/\(([\d.]+)\)/g, "")
     .replace(/\s+/g, " ")
     .trim();
+  const allergens = explicit.length ? explicit : inferAllergenCodes(name);
 
   return { name, allergens };
 }

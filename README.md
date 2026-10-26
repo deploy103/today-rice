@@ -31,10 +31,14 @@ scp .env <server-user>@<server-host>:<deploy-path>/.env
 - 선택 날짜 점심 메뉴 클립보드 복사
 - 열량, 영양정보, 원산지, 알레르기 코드 표시
 - 돼지고기 포함 메뉴 자동 강조
+- NEIS에 식단이 없으면 한세 홈페이지 급식을 사용
+- 학교 식단에 알레르기 코드가 없으면 메뉴명으로 추정
 - 주간 급식일, 평균 열량, 등록 식사 수 요약
-- API 성공 데이터 주 단위 캐시
+- 메뉴가 있는 주만 캐시하고, 이번 주는 다시 조회
+- 매일 0시(KST)에 서버가 이번 주 식단을 미리 조회
 - 모바일 대응, favicon, PWA manifest
 
 ## 연동 엔드포인트
 
 - 급식: `https://open.neis.go.kr/hub/mealServiceDietInfo`
+- 학교 식단 보조: `/api/school-meals` (한세 홈페이지)

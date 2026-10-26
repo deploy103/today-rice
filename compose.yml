@@ -5,12 +5,32 @@ services:
     restart: unless-stopped
     expose:
       - "8009"
+    depends_on:
+      - school-meal-proxy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8009/"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 5s
+    networks:
+      mvtp-web-net:
+        aliases:
+          - today-rice
+
+  school-meal-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    restart: unless-stopped
+    expose:
+      - "8010"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8010/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - mvtp-web-net
 
