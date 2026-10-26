@@ -1,11 +1,12 @@
-const CACHE_KEY = "mealdesk.neis.weekCache.v3";
-const CACHE_TTL_MS = 6 * 60 * 60_000;
+const NEIS_BASE_URL = "https://open.neis.go.kr/hub";
+const CACHE_KEY = "mealdesk.neis.weekCache.v2";
 
 const runtimeConfig = window.MEAL_CONFIG || {};
 const SCHOOL_CONFIG = Object.freeze({
   name: runtimeConfig.name || "한세사이버보안고등학교",
   officeCode: runtimeConfig.officeCode || "B10",
   schoolCode: runtimeConfig.schoolCode || "7010911",
+  apiKey: runtimeConfig.apiKey || "",
 });
 
 const ALLERGEN_LABELS = {
@@ -36,7 +37,6 @@ const SOURCE_LABELS = {
   loading: "불러오는 중",
   missing: "학교 코드 필요",
   api: "나이스 연결",
-  school: "학교 식단",
   empty: "등록된 급식 없음",
   cache: "저장 데이터",
   error: "불러오기 실패",
@@ -127,39 +127,36 @@ async function loadWeek(options = {}) {
     return;
   }
 
-  const cached = loadCachedRows(startDate, endDate);
-  const force = Boolean(options.force);
-  const liveWeek = weekDates.includes(todayKst());
-
   try {
-    if (cached && !force) {
-      hydrateWeekRows(cached.rows, weekDates);
-      state.source = "cache";
-      state.lastUpdated = new Date(cached.cachedAt);
-      state.isLoading = false;
-      render();
-      if (!liveWeek) {
+    if (!options.force) {
+      const cached = loadCachedRows(startDate, endDate);
+      if (cached) {
+        hydrateWeekRows(cached.rows, weekDates);
+        state.source = "cache";
+        state.lastUpdated = new Date(cached.cachedAt);
+        state.isLoading = false;
+        render();
         return;
       }
     }
 
-    const { rows, source } = await fetchMealRows(startDate, endDate);
+    const rows = await fetchMealRows(startDate, endDate);
     hydrateWeekRows(rows, weekDates);
     if (rows.length) {
       saveCachedRows(startDate, endDate, rows);
     } else {
       clearCachedRows(startDate, endDate);
     }
-    state.source = rows.length ? source : "empty";
+    state.source = rows.length ? "api" : "empty";
     state.lastUpdated = new Date();
   } catch (error) {
     console.error(error);
-    const fallback = cached || loadCachedRows(startDate, endDate);
+    const cached = loadCachedRows(startDate, endDate);
 
-    if (fallback) {
-      hydrateWeekRows(fallback.rows, weekDates);
+    if (cached) {
+      hydrateWeekRows(cached.rows, weekDates);
       state.source = "cache";
-      state.lastUpdated = new Date(fallback.cachedAt);
+      state.lastUpdated = new Date(cached.cachedAt);
       showToast("나이스 호출에 실패해 저장된 데이터를 표시합니다.");
     } else {
       setEmptyWeek(weekDates);
@@ -175,17 +172,35 @@ async function loadWeek(options = {}) {
 }
 
 async function fetchMealRows(startDate, endDate) {
-  const response = await fetch(`/api/school-meals?from=${startDate}&to=${endDate}`, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`meals HTTP ${response.status}`);
+  const params = new URLSearchParams({
+    Type: "json",
+    pIndex: "1",
+    pSize: "100",
+    ATPT_OFCDC_SC_CODE: SCHOOL_CONFIG.officeCode,
+    SD_SCHUL_CODE: SCHOOL_CONFIG.schoolCode,
+    MLSV_FROM_YMD: compactDate(startDate),
+    MLSV_TO_YMD: compactDate(endDate),
+  });
+
+  if (SCHOOL_CONFIG.apiKey) {
+    params.set("KEY", SCHOOL_CONFIG.apiKey);
   }
+
+  const response = await fetch(`${NEIS_BASE_URL}/mealServiceDietInfo?${params}`);
+  if (!response.ok) {
+    throw new Error(`NEIS HTTP ${response.status}`);
+  }
+
   const data = await response.json();
-  const rows = Array.isArray(data.rows) ? data.rows : [];
-  const hasCodes = rows.some((row) => /\(\d/.test(row.DDISH_NM || ""));
-  return {
-    rows,
-    source: hasCodes ? "api" : rows.length ? "school" : "empty",
-  };
+  if (data.RESULT) {
+    if (data.RESULT.CODE === "INFO-200") {
+      return [];
+    }
+
+    throw new Error(data.RESULT.MESSAGE || data.RESULT.CODE || "NEIS error");
+  }
+
+  return data.mealServiceDietInfo?.[1]?.row || [];
 }
 
 function hydrateWeekRows(rows, weekDates) {
@@ -234,9 +249,9 @@ function clearCachedRows(startDate, endDate) {
 
 function loadCachedRows(startDate, endDate) {
   const cached = loadCacheStore()[getCacheId(startDate, endDate)];
-  if (!cached?.rows?.length || !cached.cachedAt) return null;
-  const age = Date.now() - Date.parse(cached.cachedAt);
-  if (!Number.isFinite(age) || age > CACHE_TTL_MS) return null;
+  if (!cached?.rows?.length) {
+    return null;
+  }
   return cached;
 }
 
@@ -501,26 +516,8 @@ function splitMealText(value) {
     .filter(Boolean);
 }
 
-function inferAllergenCodes(name) {
-  const rules = [
-    [1, /계란|달걀|오므라이스|에그|메추리알/],
-    [2, /우유|요거트|치즈|버터|크림|라떼/],
-    [5, /된장|두부|콩나물|콩고기/],
-    [6, /국수|우동|칼국수|만두|빵|쿠키|카츠|까스|튀김|크로칸|파스타|수제비|떡볶이/],
-    [8, /게살|꽃게|게장/],
-    [9, /새우/],
-    [10, /돼지|돈육|돈까스|돈가스|제육|삼겹|목살|베이컨|소시지|소세지|탕수육|돈갈비|동파육|햄(?!버거)/],
-    [12, /토마토|케첩/],
-    [15, /닭|치킨|깐풍기/],
-    [16, /소고기|한우|소갈비|육우/],
-    [17, /오징어|주꾸미/],
-    [18, /골뱅이|바지락|조개|홍합|전복/],
-  ];
-  return rules.filter(([, pattern]) => pattern.test(name)).map(([code]) => code);
-}
-
 function parseDish(rawDish) {
-  const explicit = [...rawDish.matchAll(/\(([\d.]+)\)/g)]
+  const allergens = [...rawDish.matchAll(/\(([\d.]+)\)/g)]
     .flatMap((match) => match[1].split("."))
     .filter(Boolean)
     .map(Number)
@@ -530,7 +527,6 @@ function parseDish(rawDish) {
     .replace(/\(([\d.]+)\)/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  const allergens = explicit.length ? explicit : inferAllergenCodes(name);
 
   return { name, allergens };
 }
