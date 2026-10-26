@@ -1,5 +1,5 @@
 const NEIS_BASE_URL = "https://open.neis.go.kr/hub";
-const CACHE_KEY = "mealdesk.neis.weekCache";
+const CACHE_KEY = "mealdesk.neis.weekCache.v2";
 
 const runtimeConfig = window.MEAL_CONFIG || {};
 const SCHOOL_CONFIG = Object.freeze({
@@ -142,7 +142,11 @@ async function loadWeek(options = {}) {
 
     const rows = await fetchMealRows(startDate, endDate);
     hydrateWeekRows(rows, weekDates);
-    saveCachedRows(startDate, endDate, rows);
+    if (rows.length) {
+      saveCachedRows(startDate, endDate, rows);
+    } else {
+      clearCachedRows(startDate, endDate);
+    }
     state.source = rows.length ? "api" : "empty";
     state.lastUpdated = new Date();
   } catch (error) {
@@ -225,6 +229,10 @@ function normalizeMealRows(rows) {
 }
 
 function saveCachedRows(startDate, endDate, rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    clearCachedRows(startDate, endDate);
+    return;
+  }
   const cache = loadCacheStore();
   cache[getCacheId(startDate, endDate)] = {
     cachedAt: new Date().toISOString(),
@@ -233,8 +241,18 @@ function saveCachedRows(startDate, endDate, rows) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
 }
 
+function clearCachedRows(startDate, endDate) {
+  const cache = loadCacheStore();
+  delete cache[getCacheId(startDate, endDate)];
+  localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+}
+
 function loadCachedRows(startDate, endDate) {
-  return loadCacheStore()[getCacheId(startDate, endDate)] || null;
+  const cached = loadCacheStore()[getCacheId(startDate, endDate)];
+  if (!cached?.rows?.length) {
+    return null;
+  }
+  return cached;
 }
 
 function loadCacheStore() {
